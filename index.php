@@ -73,7 +73,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (isset($_POST[$post_key]) && $_POST[$post_key] !== '') {
             $planets[$label] = [
                 'deg' => (float) $_POST[$post_key],
-                // 【修正1】未入力時のエラー（Warning）対策
                 'sign' => $_POST[$post_key . '_sign'] ?? 'cardinal'
             ];
         }
@@ -190,6 +189,29 @@ function check_orb($deg1, $sign1, $deg2, $sign2, $orb = 2.0)
 
     return $diff <= $orb;
 }
+
+// 【追加】10進数の度数を度・分・秒の文字列に変換する関数
+function convert_to_dms_string($decimal_deg)
+{
+    $deg = floor($decimal_deg);
+    $min_dec = ($decimal_deg - $deg) * 60;
+    $min = floor($min_dec);
+    $sec_dec = ($min_dec - $min) * 60;
+    $sec = round($sec_dec);
+
+    // 秒、分の繰り上げ処理
+    if ($sec == 60) {
+        $min += 1;
+        $sec = 0;
+    }
+    if ($min == 60) {
+        $deg += 1;
+        $min = 0;
+    }
+
+    // 「X°Y'Z"」形式の文字列を作成
+    return sprintf("%d°%02d'%02d\"", $deg, $min, $sec);
+}
 ?>
 
 <?php if (!empty($results)): ?>
@@ -200,11 +222,11 @@ function check_orb($deg1, $sign1, $deg2, $sign2, $orb = 2.0)
                 <?php echo htmlspecialchars($row['pair']); ?>
             </div>
             <ul style="list-style-type: none; padding-left: 0;">
-                <li>ポイント1: <?php echo round($row['result'][0]['deg'], 2); ?>度
+                <li>ポイント1: <?php echo htmlspecialchars(convert_to_dms_string($row['result'][0]['deg'])); ?>
                     (<?php echo htmlspecialchars($row['result'][0]['sign']); ?>) ＝
                     <?php echo htmlspecialchars($row['hits1']); ?>
                 </li>
-                <li>ポイント2: <?php echo round($row['result'][1]['deg'], 2); ?>度
+                <li>ポイント2: <?php echo htmlspecialchars(convert_to_dms_string($row['result'][1]['deg'])); ?>
                     (<?php echo htmlspecialchars($row['result'][1]['sign']); ?>) ＝
                     <?php echo htmlspecialchars($row['hits2']); ?>
                 </li>
